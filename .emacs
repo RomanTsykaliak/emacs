@@ -40,6 +40,12 @@
  '(gdb-show-main t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(languagetool-console-arguments '("--languagemodel" "/home/danika/ngram-data"))
+ '(languagetool-console-command "~/languagetool/languagetool-commandline.jar")
+ '(languagetool-correction-language "en-GB")
+ '(languagetool-java-arguments '("-Dfile.encoding=UTF-8"))
+ '(languagetool-mother-tongue "de-DE")
+ '(languagetool-server-command "~/languagetool/languagetool-server.jar")
  '(menu-bar-mode nil)
  '(mode-line-format
    '("%e" mode-line-front-space
@@ -52,7 +58,7 @@
      (vc-mode vc-mode)
      " " mode-line-modes mode-line-misc-info mode-line-frame-identification mode-line-buffer-identification mode-line-end-spaces))
  '(package-selected-packages
-   '(markdown-mode transpose-frame cmake-mode pdf-tools password-generator flycheck osx-dictionary nov picpocket buffer-move stickyfunc-enhance move-text win-switch))
+   '(languagetool markdown-mode transpose-frame cmake-mode pdf-tools password-generator flycheck osx-dictionary nov picpocket buffer-move stickyfunc-enhance move-text win-switch))
  '(scroll-bar-mode nil)
  '(scroll-up-aggressively 0.25)
  '(tool-bar-mode nil)
@@ -1093,4 +1099,53 @@ Meant to be added to `c-mode-common-hook'."
   "Enable line wrapping in buffers."
   (visual-line-mode 1))
 (add-hook 'gfm-mode-hook 'my-gfm-mode-hook)
+(require 'languagetool
+;; https://github.com/PillFall/languagetool.el
+;; Use languagetool as your grammar, orthography and styling checker
+;; tool in Emacs.  Confirmed to work on following environment:
+;;   (as user) `java --version`
+;;   openjdk 17.0.10 2024-01-16
+;;   OpenJDK Runtime Environment (build 17.0.10+7-Debian-1deb12u1)
+;;   OpenJDK 64-Bit Server VM (build 17.0.10+7-Debian-1deb12u1, mixed mode, sharing)
+;; LanguageTool can be downloaded from https://languagetool.org/download/
+;;   (as user) `java -jar ~/languagetool/languagetool-commandline.jar --version`
+;;   LanguageTool version 6.4 (2024-03-28 14:05:28 +0100, 0e9362b)
+;; The N-gram data can be downloaded from https://languagetool.org/download/ngram-data/
+;;   (as user) `ls ~/ngram-data/`
+;;   de  en
+)
+;; Was set through `M-x customize`:
+;; (setq languagetool-java-arguments '("-Dfile.encoding=UTF-8")
+;;       languagetool-console-command "~/languagetool/languagetool-commandline.jar"
+;;       languagetool-server-command "~/languagetool/languagetool-server.jar"
+;;       languagetool-console-arguments '("--languagemodel" "/home/danika/ngram-data") ;; cannot use ~/ngram-data
+;;       languagetool-correction-language "en-GB"
+;;       languagetool-mother-tongue "de-DE")
+;; console mode
+;; (as user) /usr/bin/java -Dfile.encoding=UTF-8 -jar /home/danika/languagetool/languagetool-commandline.jar --languagemodel /home/danika/ngram-data --encoding utf8 --json --language en-GB --mothertongue de-DE
+;; (as user) /usr/bin/java -Dfile.encoding=UTF-8 -jar /home/danika/languagetool/languagetool-commandline.jar --languagemodel /home/danika/ngram-data --encoding utf8 --json --language de-DE --mothertongue de-DE
+(global-set-key "\C-x4l" 'languagetool-set-language) ;; de-DE  en-GB
+;; In this mode, when you start checking, the first thing you need to do
+;; is call `languagetool-check`.  This will invoke LanguageTool in the
+;; current region, if any, and then highlight all the suggestions made
+;; by the tool.  If there is no region, the whole available portion of
+;; the buffer will check.  This function is synchronous.  Therefore, it
+;; blocks Emacs until LanguageTool done with your text.  This is the
+;; right behaviour, as LanguageTool is a bit slow checking text in this
+;; mode, so it prevents you from changing the text while checking.
+(global-set-key "\C-x4w" 'languagetool-check)
+;; After LanguageTool highlights all its suggestions, now you can
+;; correct your text, then put your cursor on the underlined word and
+;; call `languagetool-correct-at-point`, this will pop up a transient
+;; minibuffer with all the suggestions, choose the one fits your needs,
+;; and you are ready to go.
+(global-set-key "\C-x44" 'languagetool-correct-at-point)
+;; There is also a buffer wide correction function, called
+;; `languagetool-correct-buffer`, you can call it if you want to check
+;; all the buffer, suggestion by suggestion.
+(global-set-key "\C-x4c" 'languagetool-correct-buffer)
+;; If you finish, and don’t want to see any more suggestions, call
+;; `languagetool-clear-suggestions` and all the highlighting will
+;; disappear.
+(global-set-key "\C-x4W" 'languagetool-clear-suggestions)
 ;;; .emacs ends here
