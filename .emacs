@@ -896,7 +896,38 @@ Meant to be added to `c-mode-common-hook'."
     (global-set-key (kbd "C-#") 'osx-dictionary-search-word-at-point)
   (global-set-key (kbd "C-#")  'dictionary-lookup-definition))
 (global-set-key (kbd "C-$") 'ispell-word)
-(let ((languages '("english" "german")))
+;; replace ispell with hunspell:
+;;   C-h v ispell-program-name  /usr/bin/ispell
+;; (as root) aptitude purge ispell ibritish-insane ienglish-common
+;;   ingerman irussian wbritish-insane wngerman wukrainian
+;; check directories: /usr/share/dict (empty)
+;;   /usr/share/ispell (removed)  /usr/lib/ispell (empty)
+;;   /var/lib/ispell (empty)
+;;   C-h v ispell-program-name "hunspell"
+;; (let ((languages '("english" "german")))
+;;   (setq ispell-languages-ring (make-ring (length languages)))
+;;   (dolist (elem languages) (ring-insert ispell-languages-ring elem)))
+;; (defun ispell-cycle-languages ()
+;;   "Toggle both ispell distionary and input method with C-\\."
+;;   (interactive)
+;;   (let ((language (ring-ref ispell-languages-ring -1)))
+;;     (ring-insert ispell-languages-ring language)
+;;     (ispell-change-dictionary language)
+;;     (cond
+;;      ((string-match "german" language) (activate-input-method "german-postfix"))
+;;      ((string-match "english" language) (deactivate-input-method)))))
+;; (define-key (current-global-map) [remap toggle-input-method] 'ispell-cycle-languages)
+;; (as root) aptitude install hunspell hunspell-de-de hunspell-en-gb
+;;   hunspell-ru hunspell-uk
+;; (as user) hunspell -D
+;;   VERFÜGBARE WÖRTERBÜCHER:
+;;   /usr/share/hunspell/uk_UA /usr/share/hunspell/de_DE
+;;   /usr/share/hunspell/de_LU /usr/share/hunspell/de_BE
+;;   /usr/share/hunspell/en_GB /usr/share/hunspell/ru_RU
+;;   /usr/share/myspell/dicts/hyph_ru_RU
+;;   GELADENES WÖRTERBUCH:
+;;   /usr/share/hunspell/de_DE.aff /usr/share/hunspell/de_DE.dic
+(let ((languages '("en_GB" "de_DE" "uk_UA" "ru_RU")))
   (setq ispell-languages-ring (make-ring (length languages)))
   (dolist (elem languages) (ring-insert ispell-languages-ring elem)))
 (defun ispell-cycle-languages ()
@@ -906,8 +937,14 @@ Meant to be added to `c-mode-common-hook'."
     (ring-insert ispell-languages-ring language)
     (ispell-change-dictionary language)
     (cond
-     ((string-match "german" language) (activate-input-method "german-postfix"))
-     ((string-match "english" language) (deactivate-input-method)))))
+     ;; Check variable `input-method-alist`.  Use a US keyboard layout
+     ;; to type characters from other languages like the german umlauts.
+     ;; My preferred way to do this in Emacs is the input-method
+     ;; `german-postfix`.  The input "ae" becomes "ä".  ae -> ä  oe -> ö  ue -> ü  sz -> ß
+     ((string-match "de_DE" language) (activate-input-method "german-postfix"))
+     ((string-match "uk_UA" language) (activate-input-method "ukrainian-computer")) ;; "ЙЦУКЕН"
+     ((string-match "ru_RU" language) (activate-input-method "russian-computer"))   ;; "ЙЦУКЕН"
+     ((string-match "en_GB" language) (deactivate-input-method)))))
 (define-key (current-global-map) [remap toggle-input-method] 'ispell-cycle-languages)
 ;; So what I gather from the thread is that a fix will be applied to
 ;; Emacs 28 which will make it's way up to Emacs 29.  Meanwhile, one
